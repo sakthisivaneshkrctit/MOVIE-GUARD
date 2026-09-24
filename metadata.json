@@ -1,0 +1,6 @@
+{
+  "name": "Movie Guard",
+  "description": "Secure media library web application with face verification, media management, user authentication, and video player.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
