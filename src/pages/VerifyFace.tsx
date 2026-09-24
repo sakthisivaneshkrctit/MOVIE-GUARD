@@ -36,7 +36,6 @@ export const VerifyFace: React.FC<VerifyFaceProps> = ({
   const [statusText, setStatusText] = useState('Position your face in front of the camera for biometric verification');
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [verificationResult, setVerificationResult] = useState<FaceVerificationResult | null>(null);
-  const [enrollSuccessMessage, setEnrollSuccessMessage] = useState<string | null>(null);
 
   const [realtimeFace, setRealtimeFace] = useState<FacialFeatureDetection>({
     hasValidFace: true,
@@ -301,18 +300,6 @@ export const VerifyFace: React.FC<VerifyFaceProps> = ({
     executeBiometricVerification(liveFrame);
   };
 
-  const handleEnrollLiveFace = () => {
-    const liveFrame = captureCurrentWebcamFrame();
-    if (!liveFrame) {
-      setCameraError('Unable to capture camera frame. Please ensure your webcam is actively displaying your face.');
-      return;
-    }
-    if (!currentUser) return;
-    store.updateUserPhoto(liveFrame);
-    setEnrollSuccessMessage(`Biometric face template enrolled! Your live webcam face is now the ONLY authorized facial identity for logged-in user ${currentUser.name}.`);
-    setTimeout(() => setEnrollSuccessMessage(null), 5000);
-  };
-
   if (!media || !currentUser) {
     return (
       <div className="p-12 text-center text-zinc-400">
@@ -488,40 +475,51 @@ export const VerifyFace: React.FC<VerifyFaceProps> = ({
           </div>
         )}
 
-        {/* Quick Enroll / Update Face from Camera */}
-        <div className="p-3 rounded-2xl bg-zinc-950 border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
-          <div className="flex items-center gap-2.5">
-            <img 
-              src={currentUser.webcamPhotoUrl} 
-              alt={currentUser.name} 
-              className="w-9 h-9 rounded-xl object-cover border border-cyan-500/40 bg-zinc-900 shrink-0" 
-            />
-            <div>
-              <p className="text-white font-bold">{currentUser.name} (Aadhaar Primary)</p>
-              <p className="text-[11px] text-zinc-400">
-                {currentUser.webcamPhotoUrl?.startsWith('data:image/jpeg') 
-                  ? 'Live Webcam Template Enrolled' 
-                  : 'Default Template (Click to save your live camera face)'}
+        {/* Authorized Biometric Identity from Memory */}
+        <div className="p-4 rounded-2xl bg-zinc-950 border border-emerald-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-mono shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+          
+          <div className="flex items-center gap-3.5 z-10">
+            <div className="relative">
+              <img 
+                src={currentUser.webcamPhotoUrl} 
+                alt={currentUser.name} 
+                className="w-14 h-14 rounded-2xl object-cover border-2 border-emerald-400 bg-zinc-900 shrink-0 shadow-lg shadow-emerald-950/50" 
+              />
+              <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-zinc-950 flex items-center justify-center text-[10px] text-black font-black shadow">
+                ✓
+              </span>
+            </div>
+
+            <div className="space-y-0.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-white font-black text-sm">{currentUser.name}</p>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  LOADED FROM MEMORY
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-zinc-800 text-zinc-300 border border-zinc-700">
+                  {currentUser.role === 'ADMIN' ? 'Admin' : 'Primary Citizen'}
+                </span>
+              </div>
+
+              <p className="text-[11px] text-zinc-300">
+                Aadhaar UID: <span className="text-white font-mono font-bold">{currentUser.aadhaarNumber || '2841 9382 7105'}</span> • Age: <span className="text-emerald-400 font-bold">{currentUser.age} Yrs (Adult 18+ Verified)</span>
+              </p>
+
+              <p className="text-[10px] text-zinc-400">
+                Biometric vector template loaded from active memory. Live camera will verify your face against this template.
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleEnrollLiveFace}
-            disabled={!stream}
-            className="w-full sm:w-auto px-3.5 py-2 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-cyan-300 hover:text-white rounded-xl border border-cyan-500/40 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-sm"
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span>Enroll Live Face to Memory</span>
-          </button>
-        </div>
 
-        {enrollSuccessMessage && (
-          <div className="p-3 bg-emerald-950/90 border border-emerald-500/50 rounded-2xl text-xs text-emerald-300 font-mono flex items-center gap-2 shadow-lg animate-fade-in">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{enrollSuccessMessage}</span>
+          <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-800/80 gap-1.5 shrink-0 z-10">
+            <span className="px-2.5 py-1 rounded-xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              Memory Template Active
+            </span>
+            <span className="text-[9px] text-zinc-500 font-mono">Zero-Latency Cache</span>
           </div>
-        )}
+        </div>
 
         {/* Registered Household Aadhaar Biometric Registry Bar */}
         <div className="space-y-2">
